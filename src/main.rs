@@ -43,7 +43,7 @@ fn main() -> ! {
         &mut watchdog,
     ).ok().unwrap();
 
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
+    let delay: &mut cortex_m::delay::Delay = &mut cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
 
     let sio = hal::Sio::new(pac.SIO);
 
@@ -54,11 +54,88 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    let mut led_pin = pins.gpio25.into_push_pull_output();
-    loop {
+    let led_pin: &mut hal::gpio::Pin<hal::gpio::bank0::Gpio25, hal::gpio::Output<hal::gpio::PushPull>> = &mut pins.gpio25.into_push_pull_output();
+
+    fn short(led_pin: &mut hal::gpio::Pin<hal::gpio::bank0::Gpio25, hal::gpio::Output<hal::gpio::PushPull>>, delay: &mut cortex_m::delay::Delay) {
         led_pin.set_high().unwrap();
-        delay.delay_ms(500);
+        delay.delay_ms(200);
         led_pin.set_low().unwrap();
-        delay.delay_ms(500);
+    }
+
+    fn long(led_pin: &mut hal::gpio::Pin<hal::gpio::bank0::Gpio25, hal::gpio::Output<hal::gpio::PushPull>>, delay: &mut cortex_m::delay::Delay) {
+        led_pin.set_high().unwrap();
+        delay.delay_ms(600);
+        led_pin.set_low().unwrap();
+    }
+
+    fn in_delay(delay: &mut cortex_m::delay::Delay) {
+        delay.delay_ms(200);
+    }
+
+    fn between_delay(delay: &mut cortex_m::delay::Delay) {
+        delay.delay_ms(1400);
+    }
+
+    loop {
+        // c: l, s, l, s
+        long(led_pin, delay);
+        in_delay(delay);
+        short(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        short(led_pin, delay);
+        between_delay(delay);
+        
+        // s: s, s, s
+        short(led_pin, delay);
+        in_delay(delay);
+        short(led_pin, delay);
+        in_delay(delay);
+        short(led_pin, delay);
+        between_delay(delay);
+
+        // e: s
+        short(led_pin, delay);
+        between_delay(delay);
+
+        // 3: s, s, s, l, l
+        short(led_pin, delay);
+        in_delay(delay);
+        short(led_pin, delay);
+        in_delay(delay);
+        short(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        between_delay(delay);
+
+        // 1: s, l, l, l, l
+        short(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        between_delay(delay);
+
+        // 0: l, l, l, l, l
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        in_delay(delay);
+        long(led_pin, delay);
+        between_delay(delay);
+
+        // extra delay between loop
+        delay.delay_ms(3000);
     }
 }
